@@ -7,33 +7,30 @@ read -p "Enter the value for LAWID: " LAWID
 touch ConnectivityToMonitorTest
 
 # Define the commands with LAWID as a variable
-commands=(
-    "cat /proc/sys/crypto/fips_enabled >> ConnectivityToMonitorTest 2>&1"
-    "curl $LAWID.ods.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
-    "curl $LAWID.oms.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
-    "nslookup $LAWID.ods.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
-    "nslookup $LAWID.oms.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
-    "nslookup $LAWID.agentsvc.azure-automation.net >> ConnectivityToMonitorTest 2>&1"
-    "netcat -vz $LAWID.ods.opinsights.azure.com 443 >> ConnectivityToMonitorTest 2>&1"
-    "netcat -vz $LAWID.oms.opinsights.azure.com 443 >> ConnectivityToMonitorTest 2>&1"
-    "netcat -vz $LAWID.agentsvc.azure-automation.net 443 >> ConnectivityToMonitorTest 2>&1"
-    "echo | openssl s_client -connect $LAWID.ods.opinsights.azure.com:443 -servername $LAWID.ods.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
-    "echo | openssl s_client -connect $LAWID.oms.opinsights.azure.com:443 -servername $LAWID.oms.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
-    "echo | openssl s_client -connect $LAWID.agentsvc.azure-automation.net:443 -servername $LAWID.agentsvc.azure-automation.net >> ConnectivityToMonitorTest 2>&1"
-    "echo | openssl s_client -connect scadvisorcontent.blob.core.windows.net:443 -servername scadvisorcontent.blob.core.windows.net >> ConnectivityToMonitorTest 2>&1"
-    "python3 --version >> ConnectivityToMonitorTest 2>&1"
-    "sestatus >> ConnectivityToMonitorTest 2>&1"
-    "hostnamectl >> ConnectivityToMonitorTest 2>&1"
-    "cat /etc/*release >> ConnectivityToMonitorTest 2>&1"
-    "openssl version >> ConnectivityToMonitorTest 2>&1"
-)
+cmds="cat /proc/sys/crypto/fips_enabled
+curl $LAWID.ods.opinsights.azure.com
+curl $LAWID.oms.opinsights.azure.com
+nslookup $LAWID.ods.opinsights.azure.com
+nslookup $LAWID.oms.opinsights.azure.com
+nslookup $LAWID.agentsvc.azure-automation.net
+netcat -vz $LAWID.ods.opinsights.azure.com 443
+netcat -vz $LAWID.oms.opinsights.azure.com 443
+netcat -vz $LAWID.agentsvc.azure-automation.net 443
+echo | openssl s_client -connect $LAWID.ods.opinsights.azure.com:443 -servername $LAWID.ods.opinsights.azure.com
+echo | openssl s_client -connect $LAWID.oms.opinsights.azure.com:443 -servername $LAWID.oms.opinsights.azure.com
+echo | openssl s_client -connect $LAWID.agentsvc.azure-automation.net:443 -servername $LAWID.agentsvc.azure-automation.net
+echo | openssl s_client -connect scadvisorcontent.blob.core.windows.net:443 -servername scadvisorcontent.blob.core.windows.net
+python3 --version
+sestatus
+hostnamectl
+cat /etc/*release
+openssl version"
 
 # Execute commands and append output to the script file
-for cmd in "${commands[@]}"
-do
+echo "$cmds" | while read -r cmd; do
     echo "$cmd" >> ConnectivityToMonitorTest
     echo "----------------------------------------" >> ConnectivityToMonitorTest
-    eval "$cmd" >> ConnectivityToMonitorTest
+    eval "$cmd" >> ConnectivityToMonitorTest 2>&1
     echo "" >> ConnectivityToMonitorTest
 done
 
