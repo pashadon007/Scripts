@@ -1,10 +1,41 @@
+#!/bin/bash
+
+# Prompt the user to enter the value for LAWID
+read -p "Enter the value for LAWID: " LAWID
+
+# Create the script file
 touch ConnectivityToMonitorTest
-for cmd in "cat /proc/sys/crypto/fips_enabled >> ConnectivityToMonitorTest 2>&1" "curl F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.ods.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1" "curl F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.oms.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1" "nslookup F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.ods.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1" "nslookup F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.oms.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1" "nslookup F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.agentsvc.azure-automation.net >> ConnectivityToMonitorTest 2>&1" "netcat -vz F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.ods.opinsights.azure.com 443 >> ConnectivityToMonitorTest 2>&1" "netcat -vz F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.oms.opinsights.azure.com 443 >> ConnectivityToMonitorTest 2>&1" "netcat -vz F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.agentsvc.azure-automation.net 443 >> ConnectivityToMonitorTest 2>&1" "echo | openssl s_client -connect F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.ods.opinsights.azure.com:443 -servername F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.ods.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1" "echo | openssl s_client -connect F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.oms.opinsights.azure.com:443 -servername F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.oms.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1" "echo | openssl s_client -connect F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.agentsvc.azure-automation.net:443 -servername F7297D88-C0EE-4B88-A44C-68DF4BAB53F0.agentsvc.azure-automation.net >> ConnectivityToMonitorTest 2>&1" "echo | openssl s_client -connect scadvisorcontent.blob.core.windows.net:443 -servername scadvisorcontent.blob.core.windows.net >> ConnectivityToMonitorTest 2>&1" "python3 --version >> ConnectivityToMonitorTest 2>&1" "sestatus >> ConnectivityToMonitorTest 2>&1" "hostnamectl >> ConnectivityToMonitorTest 2>&1" "cat /etc/*release >> ConnectivityToMonitorTest 2>&1" "openssl version >> ConnectivityToMonitorTest 2>&1" 
+
+# Define the commands with LAWID as a variable
+commands=(
+    "cat /proc/sys/crypto/fips_enabled >> ConnectivityToMonitorTest 2>&1"
+    "curl $LAWID.ods.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
+    "curl $LAWID.oms.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
+    "nslookup $LAWID.ods.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
+    "nslookup $LAWID.oms.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
+    "nslookup $LAWID.agentsvc.azure-automation.net >> ConnectivityToMonitorTest 2>&1"
+    "netcat -vz $LAWID.ods.opinsights.azure.com 443 >> ConnectivityToMonitorTest 2>&1"
+    "netcat -vz $LAWID.oms.opinsights.azure.com 443 >> ConnectivityToMonitorTest 2>&1"
+    "netcat -vz $LAWID.agentsvc.azure-automation.net 443 >> ConnectivityToMonitorTest 2>&1"
+    "echo | openssl s_client -connect $LAWID.ods.opinsights.azure.com:443 -servername $LAWID.ods.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
+    "echo | openssl s_client -connect $LAWID.oms.opinsights.azure.com:443 -servername $LAWID.oms.opinsights.azure.com >> ConnectivityToMonitorTest 2>&1"
+    "echo | openssl s_client -connect $LAWID.agentsvc.azure-automation.net:443 -servername $LAWID.agentsvc.azure-automation.net >> ConnectivityToMonitorTest 2>&1"
+    "echo | openssl s_client -connect scadvisorcontent.blob.core.windows.net:443 -servername scadvisorcontent.blob.core.windows.net >> ConnectivityToMonitorTest 2>&1"
+    "python3 --version >> ConnectivityToMonitorTest 2>&1"
+    "sestatus >> ConnectivityToMonitorTest 2>&1"
+    "hostnamectl >> ConnectivityToMonitorTest 2>&1"
+    "cat /etc/*release >> ConnectivityToMonitorTest 2>&1"
+    "openssl version >> ConnectivityToMonitorTest 2>&1"
+)
+
+# Execute commands and append output to the script file
+for cmd in "${commands[@]}"
 do
-  echo "$cmd" >> ConnectivityToMonitorTest
-  echo "----------------------------------------" >> ConnectivityToMonitorTest
-  eval "$cmd" >> ConnectivityToMonitorTest
-  echo "" >> ConnectivityToMonitorTest
+    echo "$cmd" >> ConnectivityToMonitorTest
+    echo "----------------------------------------" >> ConnectivityToMonitorTest
+    eval "$cmd" >> ConnectivityToMonitorTest
+    echo "" >> ConnectivityToMonitorTest
 done
-echo "The script has finished running and the output is saved in ConnectivityToMonitorTest"
+
+echo "The script has finished running, and the output is saved in ConnectivityToMonitorTest"
 cat ConnectivityToMonitorTest
