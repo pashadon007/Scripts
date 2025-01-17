@@ -1,0 +1,136 @@
+#!/bin/sh
+
+# Save the directory where the script is executed
+initial_dir=$(pwd)
+output_file="$initial_dir/AMACheckList"
+
+# Delete the output file if it already exists
+if [ -f "$output_file" ]; then
+    rm "$output_file"
+fi
+
+# Function to execute a command and write its output to the file
+execute_command() {
+    echo "Command: $1" >> "$output_file"
+    timeout 10s sh -c "$1" >> "$output_file" 2>&1
+    echo "\n------------------------\n" >> "$output_file"
+}
+
+# Define proxy variables
+PROXY_ADDRESS=""
+PROXY_PORT=""
+
+# Check if proxy details are provided
+if [ -n "$PROXY_ADDRESS" ] && [ -n "$PROXY_PORT" ]; then
+    PROXY="-x $PROXY_ADDRESS:$PROXY_PORT"
+else
+    PROXY=""
+fi
+
+# List of commands to execute
+commands="
+hostname
+azcmagent check
+env | grep proxy
+systemctl status azuremonitoragent
+timedatectl status
+openssl version
+ls -l /etc/opt/microsoft/azuremonitoragent/config-cache/configchunks
+tail -n 10 /var/opt/microsoft/azuremonitoragent/log/mdsd.err
+netstat -anop | grep tcp | grep himds | grep LISTEN
+curl -v -s -S -k -H \"Metadata: true\" \"http://localhost:40342/metadata/instance?api-version=2019-11-01&format=json\"
+curl -s -D - -H Metadata:true \"http://localhost:40342/metadata/identity/oauth2/token?api-version=2019-11-01&resource=https%3A%2F%2Fmanagement.azure.com\"
+ls -ltr /var/opt/azcmagent/tokens/*.key
+nslookup global.handler.control.monitor.azure.com
+nslookup prod-pr-shrsvcdc-dc-endpoint-31jp.eastus-1.handler.control.monitor.azure.com
+nslookup prod-pr-shrsvcdc-dc-endpoint-31jp.eastus-1.ingest.monitor.azure.com
+curl -v global.handler.control.monitor.azure.com:443 $PROXY
+curl -v  https://prod-pr-shrsvcdc-dc-endpoint-31jp.eastus-1.handler.control.monitor.azure.com:443 $PROXY
+curl -v  https://prod-pr-shrsvcdc-dc-endpoint-31jp.eastus-1.ingest.monitor.azure.com $PROXY
+openssl s_client -showcerts -connect global.handler.control.monitor.azure.com:443
+"
+
+# Clear the output file
+> "$output_file"
+
+# Execute each command
+echo "$commands" | while IFS= read -r cmd; do
+    execute_command "$cmd"
+done
+
+# Function to check directory permissions and write to the file
+check_directory_permissions() {
+    directories="
+        /etc/opt/microsoft/azuremonitoragent/config-cache
+        /etc/opt/microsoft/azuremonitoragent
+        /var/opt/microsoft/azuremonitoragent
+        /var/run/azuremonitoragent
+        /opt/microsoft/azuremonitoragent
+        /run/azuremonitoragent
+    "
+
+    # Add all directories starting with /var/lib/waagent/Microsoft.Azure.Monitor.AzureMonitorLinuxAgent
+    for dir in /var/lib/waagent/Microsoft.Azure.Monitor.AzureMonitorLinuxAgent*; do
+        if [ -d "$dir" ]; then
+            directories="$directories $dir"
+        fi
+    done
+
+    # Loop over each directory and print its permissions
+    for dir in $directories; do
+        if [ -e "$dir" ]; then
+            permissions=$(stat -c '%a' "$dir")
+            echo "Permissions for $dir: $permissions" >> "$output_file"
+        else
+            echo "Directory $dir does not exist." >> "$output_file"
+        fi
+    done
+}
+
+# Function to output contents of JSON files and write to the file
+output_json_files() {
+    echo "Changing directory to /etc/opt/microsoft/azuremonitoragent/config-cache/configchunks" >> "$output_file"
+    
+    # Save the current directory before changing
+    original_dir=$(pwd)
+    
+    # Change directory and check for success
+    if ! cd /etc/opt/microsoft/azuremonitoragent/config-cache/configchunks; then
+        echo "Failed to change directory to /etc/opt/microsoft/azuremonitoragent/config-cache/configchunks" >> "$output_file"
+        echo "Current directory after failed change: $(pwd)" >> "$output_file"
+        return
+    fi
+
+    echo "Current directory after change: $(pwd)" >> "$output_file"
+    
+    echo "Listing JSON files in the directory:" >> "$output_file"
+    
+    # Check if there are JSON files
+    json_files=$(ls *.json 2>/dev/null)
+    if [ -z "$json_files" ]; then
+        echo "No JSON files found in the directory" >> "$output_file"
+    else
+        for file in *.json; do
+            echo "----------------------- outputting file $file -----------------------" >> "$output_file"
+            cat "$file" >> "$output_file"
+            echo "\n" >> "$output_file"
+        done
+    fi
+    
+    # Return to the original directory
+    cd "$original_dir" || {
+        echo "Failed to return to the original directory $original_dir" >> "$output_file"
+        return
+    }
+    
+    echo "Returned to original directory: $(pwd)" >> "$output_file"
+}
+
+# Output contents of JSON files and write to the file
+output_json_files
+
+# Check directory permissions and write to the file
+check_directory_permissions
+
+# Indicate that the script has finished
+echo "Script execution finished." >> "$output_file"
